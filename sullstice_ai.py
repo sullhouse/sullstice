@@ -1,6 +1,7 @@
 import os
 import openai
 import logging
+import re
 
 # Initialize OpenAI API key from environment variable
 # Make sure to set OPENAI_API_KEY in your environment
@@ -42,6 +43,90 @@ def load_current_lineup():
     """
     return load_file("sullstice_2025_lineup.txt", "Error loading 2025 lineup information")
 
+def load_people_data():
+    """
+    Load and parse the people information from people.txt
+    
+    Returns:
+        Dictionary with people's details indexed by name and email
+    """
+    people_data = {}
+    people_by_email = {}
+    
+    people_txt = load_file("people.txt", "Error loading people information")
+    if not people_txt:
+        return {}, {}
+    
+    # Find the People section
+    people_section_match = re.search(r"#People#\s*(.*?)(?=$|\s*#)", people_txt, re.DOTALL)
+    if not people_section_match:
+        return {}, {}
+    
+    people_section = people_section_match.group(1).strip()
+    lines = people_section.split('\n')
+    
+    # Skip the header line
+    header = lines[0]
+    for line in lines[1:]:
+        if not line.strip():
+            continue
+            
+        # Split by tabs
+        parts = line.split('\t')
+        if len(parts) >= 6:
+            name, email, nickname, they_call_me, relationship, rel_level = parts[:6]
+            
+            person_info = {
+                'name': name.strip(),
+                'email': email.strip(),
+                'nickname': nickname.strip(),
+                'they_call_me': they_call_me.strip(),
+                'relationship': relationship.strip(),
+                'relationship_level': rel_level.strip() if rel_level.strip().isdigit() else '10'
+            }
+            
+            # Index by name (case insensitive)
+            people_data[name.strip().lower()] = person_info
+            
+            # Also index by email for lookup
+            if email.strip():
+                people_by_email[email.strip().lower()] = person_info
+    
+    return people_data, people_by_email
+
+def identify_person(name_or_email, people_data, people_by_email):
+    """
+    Try to identify a person from people.txt by name or email
+    
+    Args:
+        name_or_email: String with person's name or email
+        people_data: Dictionary of people indexed by name
+        people_by_email: Dictionary of people indexed by email
+        
+    Returns:
+        Dictionary with person's info or None if not found
+    """
+    if not name_or_email:
+        return None
+        
+    # Try exact email match
+    if '@' in name_or_email:
+        email = name_or_email.strip().lower()
+        if email in people_by_email:
+            return people_by_email[email]
+    
+    # Try name match
+    name = name_or_email.strip().lower()
+    if name in people_data:
+        return people_data[name]
+    
+    # Try partial name match (first name)
+    for person_name, person_info in people_data.items():
+        if name in person_name or person_name in name:
+            return person_info
+            
+    return None
+
 def generate_rsvp_response(rsvp_data):
     """
     Generate a personalized response to an RSVP using OpenAI
@@ -56,9 +141,11 @@ def generate_rsvp_response(rsvp_data):
     event_details = load_event_details()
     previous_event = load_previous_event()
     current_lineup = load_current_lineup()
+    people_data, people_by_email = load_people_data()
     
     # Extract RSVP information
     name = rsvp_data.get("name", "Guest")
+    email = rsvp_data.get("email", "")
     arriving = rsvp_data.get("arriving", "").capitalize()
     departing = rsvp_data.get("departing", "").capitalize()
     camping = rsvp_data.get("camping", "")
@@ -66,9 +153,55 @@ def generate_rsvp_response(rsvp_data):
     notes = rsvp_data.get("notes", "")
     questions = rsvp_data.get("questions", "")
     
+    # Try to identify the person who submitted the RSVP
+    person_info = identify_person(email, people_data, people_by_email) or identify_person(name, people_data, people_by_email)
+    
+    # Prepare personalized information
+    personalization = {}
+    if person_info:
+        personalization = {
+            'name': person_info['name'],
+            'nickname': person_info['nickname'] if person_info['nickname'] else person_info['name'].split()[0],
+            'they_call_me': person_info['they_call_me'] if person_info['they_call_me'] else 'Andrew',
+            'relationship': person_info['relationship'],
+            'relationship_level': person_info['relationship_level']
+        }
+    else:
+        # Default values if person not found
+        personalization = {
+            'name': name,
+            'nickname': name.split()[0],
+            'they_call_me': 'Andrew',
+            'relationship': 'Friend',
+            'relationship_level': '9'
+        }
+        
+    # Look up guests in the people database
+    guest_info = []
+    if other_guests:
+        guest_names = [g.strip() for g in other_guests.split(',')]
+        for guest_name in guest_names:
+            guest = identify_person(guest_name, people_data, people_by_email)
+            if guest:
+                guest_info.append({
+                    'name': guest['name'],
+                    'nickname': guest['nickname'] if guest['nickname'] else guest['name'].split()[0],
+                    'relationship': guest['relationship'],
+                    'relationship_level': guest['relationship_level']
+                })
+            else:
+                # Guest not found in database
+                guest_info.append({
+                    'name': guest_name,
+                    'nickname': guest_name.split()[0],
+                    'relationship': 'Unknown',
+                    'relationship_level': '10'
+                })
+    
     # Build RSVP summary for context
     rsvp_summary = f"""
 Name: {name}
+Email: {email}
 Arriving: {arriving}
 Departing: {departing}
 Camping preference: {camping}
@@ -77,13 +210,43 @@ Notes: {notes}
 Questions: {questions}
 """
 
+    # Add relationship context
+    relationship_context = f"""
+Relationship with {name}:
+- They call me: {personalization['they_call_me']}
+- Nickname or how I refer to them: {personalization['nickname']}
+- Our relationship: {personalization['relationship']}
+- Relationship level (1-10 where 1 is closest): {personalization['relationship_level']}
+"""
+
+    # Add guest relationship context
+    if guest_info:
+        relationship_context += "\nRelationship with guests:\n"
+        for guest in guest_info:
+            relationship_context += f"- {guest['name']} (nickname: {guest['nickname']}): {guest['relationship']}, level {guest['relationship_level']}\n"
+
     # Create the prompt for OpenAI
     prompt = f"""
 You are responding to an RSVP for Sullstice, a multi-day camping event. Use a friendly, casual, 
-and informative tone that matches the writing style in the event details.
+and informative tone appropriate for the specific relationship with this person.
 
 Here's information about the RSVP:
 {rsvp_summary}
+
+Important personal context to help personalize this response:
+{relationship_context}
+
+Relationship level meanings:
+1 = very good close friend I see often
+2 = family, very close
+3 = very good close friend I don't see very often
+4 = good friend mostly connected through my softball team
+5 = friend through Sullstice - mostly just see them there
+6 = good friend but we haven't really stayed in touch
+7 = friend - but more a friend of friends
+8 = family, less close
+9 = acquaintance, have only met a few times
+10 = never met
 
 Here are the event details for reference:
 {event_details}
@@ -94,40 +257,46 @@ Information about the previous Sullstice event (2024):
 Information about the current year's lineup and activities:
 {current_lineup}
 
-Write a personalized email response to {name} that:
-1. Confirms their RSVP details (arrival/departure days, camping preference, additional guests)
-2. Addresses any notes or questions they included (if applicable)
-3. Provides relevant information from the event details based on their camping choice, arrival day, etc.
-4. If appropriate, mentions activities or performances from this year's lineup that might interest them
-5. If they asked about something not specified in the current year's information, you can reference how it worked in 2024, but clarify that this year might be different
-6. Maintains a casual, friendly tone that matches the event details writing style
-7. Expresses excitement about seeing them at Sullstice
+Write a personalized email response to {personalization['nickname']} that:
+1. Shows genuine excitement about seeing them (and their guests) at Sullstice, with the tone matching our relationship level
+2. Confirms their RSVP details (arrival/departure days, camping preference, additional guests)
+3. Addresses any notes or questions they included (if applicable)
+4. Provides relevant information from the event details based on their camping choice, arrival day, etc.
+5. If appropriate, mentions activities or performances from this year's lineup that might interest them
+6. If we're close (relationship level 1-3), include a personal touch or inside reference that feels authentic
+7. If it's someone I haven't seen in a while (level 6+), express that I'm looking forward to catching up
+8. If it's family, use an appropriate familial tone
+9. Sign off with my name as {personalization['they_call_me']}
 
-The response should be conversational, like it's written by a friend who's organizing a fun event, not formal or corporate.
+The response should be conversational, reflecting the actual relationship I have with this person. Make it sound like it was written by me, not by an AI.
 """
 
     try:
         # Call OpenAI API
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",  # Use GPT-3.5-turbo for low cost
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
+            model="gpt-4",  # Upgrade to GPT-4 for better personalization
             messages=[
-            {"role": "system", "content": "You are the host of Sullstice, your name is Andrew Sullivan, writing personalized RSVP responses."},
-            {"role": "user", "content": prompt}
+                {"role": "system", "content": f"You are the host of Sullstice. Your name is {personalization['they_call_me']} (Andrew Sullivan), writing a personalized RSVP response."},
+                {"role": "user", "content": prompt}
             ],
             max_tokens=1000,
             temperature=0.7,
         )
         
         # Extract and return the generated response
-        return response.choices[0].message.content.strip()
+        ai_response = response.choices[0].message.content.strip()
+        
+        ai_response += f"\n\nP.S. This response came from Sullstice AI. Hopefully it was pretty good. No worries though, I'm cc'd on this email and read every one."
+            
+        return ai_response
     
     except Exception as e:
         logging.error(f"Error generating AI response: {e}")
         
         # Fallback response if AI fails
-        fallback = f"""{name},
-
-Thank you for your RSVP to Sullstice! I've got you down for the following:
+        fallback = f"Hi {personalization['nickname']},\n\n"
+        fallback += f"""Thank you for your RSVP to Sullstice! I've got you down for the following:
 
 Arriving: {arriving}
 Departing: {departing}
@@ -142,8 +311,9 @@ Camping option: {camping}
 Please visit sullstice.com for event details and updates.
 
 Looking forward to seeing you!
-Sullhouse
 """
+        fallback += personalization['they_call_me']
+        
         return fallback
 
 def answer_question(question):
@@ -174,7 +344,8 @@ INFORMATION ABOUT LAST YEAR'S EVENT (2024) - Use this for reference if the quest
 """
         
     try:
-        response = openai.chat.completions.create(
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        response = client.chat.completions.create(
             model="gpt-4",  # Upgraded to GPT-4 for better question answering
             messages=[
                 {"role": "system", "content": """You are a helpful assistant for Sullstice, a multi-day camping event. 
@@ -183,7 +354,7 @@ When answering questions:
 2. If the current year's information doesn't fully address the question, you can reference how things worked in 2024, but clearly indicate that this is historical information and things might be different this year
 3. Be conversational and friendly in your tone
 4. Be concise but thorough
-5. If the question is about something not mentioned in any of the provided information, acknowledge this and suggest contacting the organizers directly at sullhouse@gmail.com"""},
+5. If the question is about something not mentioned in any of the provided information, acknowledge this and suggest contacting Andrew directly at sullhouse@gmail.com"""},
                 {"role": "user", "content": f"Here is information about Sullstice:\n{context}\n\nPlease answer this question: {question}"}
             ],
             max_tokens=500,

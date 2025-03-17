@@ -1,0 +1,120 @@
+#Relationship Level	Definition#
+1	very good close friend i see often
+2	family, very close
+3	very good close friend i don't see very often
+4	good friend mostly connected through my softabll team
+5   friend through sullstice - mostly just see them there
+6   good friend but we haven't really stayed in touch
+7	friend - but more a friend of friends
+8	family, less close
+9	acquaintence, have only met a few times
+10	never met
+
+#People#
+Name	Email	Nickname	They call me	Relationship	Relationship Level
+Adam Perabo	adamperabo@gmail.com		Sully	Friend	6
+Amanda Cernovich	amanda.cernovich@gmail.com		Sully	Friend	4
+Amy Eisenstadt	Amy_designer@yahoo.com		Sully	Friend	7
+Andrew Kim	andrewkim111282@gmail.com	AK	Sully	Friend	1
+Andrew Sullivan	sullhouse@gmail.com			Me	1
+Andy Milk	andymilk@gmail.com		Sully	Friend	6
+Angela McNally	mooshcala@gmail.com		Sully	Friend	9
+Anna Waters	mswaters303@gmail.com		Sully	Friend	6
+Anne Loder	anne.l.loder@gmail.com		Sully	Friend	9
+Anthony Bartolucci	tonybart@gmail.com	Tony	Sully	Friend	1
+ANTON GOLD	snd_mxr@yahoo.com		Sully	Friend	9
+Ben Bernard	Benwbernard@gmail.com		Sully	Friend	9
+Bennett Kalcevic	bennett.kalcevic@gmail.com		Sully	Friend	6
+Brian Sadler	sadler.brian@gmail.com	Sadler	Sully	Friend	3
+Bridgett Frey	bridgettfrey@gmail.com	Bridgie		Sister-in-law	2
+Caroline Summers	carolinesummers1@gmail.com		Sully	Friend	6
+Chad Spader	cspader@gmail.com		Sull	Friend	3
+Chardee	chardee-macdennis@googlegroups.com		Sully	Friend	4
+Chase Kimball	chaselkimball@gmail.com		Sully	Friend	9
+Christopher Cotton	chriscotton.cotton@gmail.com	Chris	Sully	Friend	6
+Cristin Burton	cristinburton@gmail.com		Sully	Friend	1
+crystal domsher	crystaldomsher@gmail.com		Sully	Friend	7
+Cyrus Mehta	cymehta@gmail.com	Rus	Sully	Friend	3
+Danielle Suarez	ms.danielle.suarez@gmail.com		Sully	Friend	3
+Dave Major	realdavemajor@gmail.com		Sully	Friend	1
+david gerard	david.gherard@gmail.com	Dave	Andrew	Friend	1
+Dean Gunnison	dgunnison67@gmail.com		Sully	Friend	1
+Deana Brown	deanaeliopoulos@gmail.com	Dee	Sully	Friend	5
+deon phillipps	deon.h.phillipps@gmail.com		Sully	Friend	10
+Devin Perera	perera.devin@gmail.com	Dev	Sully	Friend	1
+Elena Rodriguez	elerodrig@gmail.com		Sully	Friend	7
+Elide Bell	elideeva@gmail.com		Sully	Friend	6
+Emily Frey	frey.emily@gmail.com		Drewbie	Wife	2
+emily hone	emilyhone@gmail.com	Hone	Andrew	Friend	1
+Eric Faison	faison.eric@gmail.com		Sully	Friend	10
+Erin Tucker	erin.elizabeth.tucker@gmail.com		Andrew	Friend	1
+George Sullivan	bossgeorge5102@gmail.com	Dad	Kiddo	Dad	2
+gina vriens	ginavriens@gmail.com		Andrew	Friend	7
+Hannah Van Winkle	hannah.vanwinkle@gmail.com		Sully	Friend	1
+Iain Keith	iainkeith@gmail.com		Sully	Friend	6
+Ian Jannetta	ijannetta@gmail.com		Andrew	Friend	7
+Jacob Bayer	JacobWBayer@gmail.com	Jake	Sully	Friend	1
+James Johnson	fullonbronson4@gmail.com		Andrew	Friend	1
+James Sullivan	jwsullivan1212@gmail.com	Uncle J	Andrew	Uncle	2
+Jeff Rand	jeffreyrand@gmail.com		Sully	Friend	3
+Jena Cumbo	jena.cumbo@gmail.com		Sully	Friend	7
+Jenni Schalk	jenni.schalk@gmail.com		Sully	Friend	1
+Jenny Gomez	jennygom@gmail.com	JGo	Sull	Friend	3
+Jill Diedrich	jilldiedrich@gmail.com		Sull	Friend	1
+John Hone	john.hone1@gmail.com		Andrew	Friend	5
+Jonathan Thompson	jdthompson@gmail.com	JT	Sully	Friend	6
+Jordan Hoffman	Jordanbhoff@gmail.com		Sully	Friend	5
+Joscelyne Schroeder	jschro463@gmail.com	Joss	Sully	Friend	7
+Julia Johnson	iamjuliajohnson@gmail.com		Sully	Friend	3
+Justin Tyler	justinrtyler@gmail.com		Sully	Friend	7
+kathryn Johnson	kjohnsonid1@gmail.com	KJ	Sully	Friend	3
+Kathy Dowling	kdowling224@aol.com		Andrew	Mother-in-law	2
+keith klang	kklang2@gmail.com		Andrew	Friend	7
+Kelly Oberndorf	koberndorf@gmail.com		Sully	Friend	3
+Kimberly McNally	kimberly.mcnally@gmail.com	Kim	Sully	Friend	7
+Laura Giles	lauragiles12@gmail.com		Andrew	Friend	7
+Laurie	lsgonzalez@gmail.com		Andrew	Friend	7
+Lyla Weiss	lylaweiss@gmail.com		Andrew	Friend	6
+Lyndsay Clark	lyndsayclark@gmail.com		Sully	Friend	1
+Mack Williams	macklikeatruck@gmail.com		Sully	Friend	1
+Margo Murray	murraymargo@gmail.com		Sully	Friend	3
+mary-kate deLouise	mdelouise@gmail.com	Mary	Andy	Friend	1
+Matthew H. Cohen	brooklynmatt@gmail.com	Matt	Sully	Friend	1
+Meg Toth	mtoth2@gmail.com		Sully	Friend	1
+Melissa Adams	mca3011@gmail.com		Sully	Friend	6
+Michael Viola	mikejviola@gmail.com	Mikey	Sully	Friend	3
+Mike Eglesia	mike.eglesia@gmail.com	Julio	Sully	Friend	3
+Miles Jennings	MilesPJennings@gmail.com		Andrew	Friend	7
+Molly Hone	Mmhone42@gmail.com		Andrew	Friend	7
+Natalie Fellows	nataliefellows@gmail.com		Andrew	Friend	3
+Neil Reese	nareese20@hotmail.com		Andy	Friend	1
+Nick Brown	designbybrown@gmail.com		Sully	Friend	5
+Norbert Barreto	norbarreto01@gmail.com		Sully	Friend	9
+Paul Veldman	pveldman1@gmail.com		Sully	Friend	6
+Pauline Sullivan	pearlarrow@gmail.com	Mom	Andrew	Mom	2
+Phi List	phi_nyc@googlegroups.com		Sully	Friend	3
+Regina	reginadeicuori@gmail.com		Sully	Friend	9
+Roger Desmond	rogerdesmond@gmail.com		Sully	Friend	5
+Russ Fink	russfink@gmail.com		Sully	Friend	7
+Sarah Orazio	sarahorazio@gmail.com		Sully	Friend	9
+Sean Almonte	s.p.almonte@gmail.com		Sully	Friend	3
+sophie fischman	sophie.fischman@gmail.com		Andrew	Friend	7
+tess amberg	amberg20@gmail.com		Andy	Friend	1
+The Dave Ramirez	dave.ramirez@gmail.com	Dave	Sully	Friend	7
+Theo Stathakis	Stathakis.theo@gmail.com		Sully	Friend	9
+Todd Galloway	toddgalloway@gmail.com		Sully	Friend	3
+Tunisia TUNI Sharpe	tunisia.sharpe@gmail.com	Tuni	Sully	Friend	3
+Wayne Fiorelli	wayne@carawaytea.com		Andy	Friend	7
+Will Whiteman JORDAN HOFFMAN BRO-IN-LAW	Willmwhiteman@gmail.com		Sully	Friend	5
+Matt Defina	mdefina84@gmail.com		Andrew	Friend	3
+Arin Sullivan	arindenise@gmail.com		Andrew	Sister	2
+Angela Bressel	asulliv21@gmail.com	Angi	Brother	Sister	2
+Mary Preston	MaryAlycePreston@gmail.com		Andrew	Sister	2
+Anna Sullivan	asul0816@gmail.com		Drew	Sister	2
+Alec Sullivan	ajs394@gmail.com	Bro	Drew	Brother	2
+Matt Rhodes	Mattarhodes@gmail.com		Andrew	Brother-in-law	2
+Josh Levin	jlevin99@gmail.com		Sully	Friend	1
+Eric Hollman	ehollman490@gmail.com		Sully	Friend	5
+Michael Amadori	mamadori6133@yahoo.com	Marco	Sully	Friend	3
+Mike Brinley	mike.a.brinley@gmail.com		Andrew	Friend	3
+Jonah Hochman	jonahshochman@gmail.com		Andrew	Friend	7

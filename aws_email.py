@@ -36,7 +36,7 @@ if not AWS_ACCESS_KEY or not AWS_SECRET_KEY:
     print("ℹ️ Using AWS credentials from environment variables")
 
 # Sender email
-SENDER_EMAIL = "sullhouse@sullstice.com"
+SENDER_EMAIL = "no-reply@sullstice.com"
 
 # Initialize AWS SES client
 ses_client = boto3.client(
