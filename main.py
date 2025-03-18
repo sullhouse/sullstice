@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # Define allowed origins
 ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 
-    'http://sullstice.com,http://localhost:8000,http://127.0.0.1:8000,https://s3.us-east-1.amazonaws.com'
+    'https://sullstice.com,http://localhost:8000,http://127.0.0.1:8000,https://s3.us-east-1.amazonaws.com'
 ).split(',')
 
 # Configure CORS
