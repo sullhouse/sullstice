@@ -1,12 +1,40 @@
 import functions_framework
 from flask import Response
 from google.cloud import storage
+from flask import Response, Flask, request
+from flask_cors import CORS
 import json
 import datetime
 import uuid
+import os
 
-@functions_framework.http
-def hello_http(request):
+app = Flask(__name__)
+
+# Define allowed origins
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 
+    'http://sullstice.com,http://localhost:8000,http://127.0.0.1:8000'
+).split(',')
+
+# Configure CORS
+CORS(app, resources={
+    r"/*": {
+        "origins": ALLOWED_ORIGINS,
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "x-access-token"],
+        "supports_credentials": True
+    }
+})
+
+def handle_request(request):
+    """Main handler function that can be called either by Flask route or Cloud Function"""
+    # Handle preflight OPTIONS requests
+    if request.method == 'OPTIONS':
+        response = Response()
+        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
     """Main Cloud Function that saves the request to a file and dispatches requests based on the URL path.
 
     Args:
@@ -92,3 +120,19 @@ def hello_http(request):
     except Exception as e:
         error_response = Response(json.dumps({"error": str(e)}), status=500, mimetype='application/json')
         return error_response
+    
+# Cloud Function entry point
+@functions_framework.http
+def hello_http(request):
+    """Cloud Function entry point"""
+    return handle_request(request)
+
+# Flask route for local development
+@app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
+def flask_handler(path):
+    """Flask route handler for local development"""
+    return handle_request(request)
+
+if __name__ == '__main__':
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'operative-connect-lite-41ee5442dc06.json'
+    app.run(host='127.0.0.1', port=5000, debug=True)
