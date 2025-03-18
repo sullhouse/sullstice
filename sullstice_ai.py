@@ -135,7 +135,7 @@ def generate_rsvp_response(rsvp_data):
         rsvp_data: Dictionary containing RSVP information
         
     Returns:
-        String containing the AI-generated response
+        Dictionary containing the AI-generated response with subject and body
     """
     # Load all context information
     event_details = load_event_details()
@@ -257,6 +257,15 @@ Information about the previous Sullstice event (2024):
 Information about the current year's lineup and activities:
 {current_lineup}
 
+Create two parts: An email subject line and a body.
+
+For the subject line:
+- Create a brief, personalized subject line related to their Sullstice RSVP
+- Include their name if appropriate
+- Keep it under 60 characters
+- Format it as "SUBJECT: Your subject line here"
+
+For the body:
 Write a personalized email response to {personalization['nickname']} that:
 1. Shows genuine excitement about seeing them (and their guests) at Sullstice, with the tone matching our relationship and relationship level
 2. Confirms their RSVP details (arrival/departure days, camping preference, additional guests)
@@ -267,6 +276,8 @@ Write a personalized email response to {personalization['nickname']} that:
 7. If it's someone I haven't seen in a while (level 3, 5, or 6), express that I'm looking forward to catching up
 8. If it's family, use an appropriate familial tone
 9. Sign off with my name as {personalization['they_call_me']}
+
+Format the body as "BODY: Your email body here"
 
 The response should be conversational, reflecting the actual relationship I have with this person. Make it sound like it was written by me, not by an AI.
 """
@@ -284,37 +295,58 @@ The response should be conversational, reflecting the actual relationship I have
             temperature=0.7,
         )
         
-        # Extract and return the generated response
+        # Extract and parse the generated response
         ai_response = response.choices[0].message.content.strip()
         
-        ai_response += f"\n\nP.S. This response came from Sullstice AI. Hopefully it was pretty good. No worries though, I'm cc'd on this email and read every one."
-            
-        return ai_response
+        # Extract subject and body
+        subject_match = re.search(r"SUBJECT:\s*(.*?)(?=$|\s*BODY:)", ai_response, re.DOTALL)
+        body_match = re.search(r"BODY:\s*(.*?)$", ai_response, re.DOTALL)
+        
+        subject = "Your Sullstice RSVP Confirmation"  # Default subject
+        body = ai_response  # Default to full response if parsing fails
+        
+        if subject_match:
+            subject = subject_match.group(1).strip()
+        
+        if body_match:
+            body = body_match.group(1).strip()
+        
+        body += f"\n\nP.S. This response came from Sullstice AI. Hopefully it was pretty good. No worries though, I'm cc'd on this email and read every one."
+        
+        return {
+            "subject": subject,
+            "body": body
+        }
     
     except Exception as e:
         logging.error(f"Error generating AI response: {e}")
         
         # Fallback response if AI fails
-        fallback = f"Hi {personalization['nickname']},\n\n"
-        fallback += f"""Thank you for your RSVP to Sullstice! I've got you down for the following:
+        subject = f"Sullstice RSVP Confirmation for {personalization['nickname']}"
+        
+        body = f"Hi {personalization['nickname']},\n\n"
+        body += f"""Thank you for your RSVP to Sullstice! I've got you down for the following:
 
 Arriving: {arriving}
 Departing: {departing}
 Camping option: {camping}
 """
         if other_guests:
-            fallback += f"Additional guests: {other_guests}\n"
+            body += f"Additional guests: {other_guests}\n"
         if notes:
-            fallback += f"Your notes: {notes}\n"
+            body += f"Your notes: {notes}\n"
             
-        fallback += """
+        body += """
 Please visit sullstice.com for event details and updates.
 
 Looking forward to seeing you!
 """
-        fallback += personalization['they_call_me']
+        body += personalization['they_call_me']
         
-        return fallback
+        return {
+            "subject": subject,
+            "body": body
+        }
 
 def answer_question(question):
     """

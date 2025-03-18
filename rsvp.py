@@ -1,5 +1,3 @@
-from google.cloud import bigquery
-import datetime
 import aws_email
 import sullstice_ai
 
@@ -19,21 +17,16 @@ def main(request):
         notes = request_json.get("notes", "")
         questions = request_json.get("questions", "")
         
-        # Generate a timestamp for the filename
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-        # Create a filename with the timestamp
-        filename = f"request_{timestamp}.json"
-        
         # Use the AI module to generate a personalized response
         ai_response = sullstice_ai.generate_rsvp_response(request_json)
         
-        # Create email body with the AI-generated response
-        email_body = ai_response
+        # Extract subject and body from the AI response
+        email_subject = ai_response.get("subject", "Sullstice RSVP")
+        email_body = ai_response.get("body", "")
         
         # Send confirmation email
         aws_email.send_email(
-            "Sullstice RSVP", 
+            email_subject, 
             email_body, 
             email, 
             "sullhouse@gmail.com",
@@ -52,7 +45,8 @@ def main(request):
             "notes": notes,
             "questions": questions,
             "status": "RSVP received successfully",
-            "ai_response": ai_response
+            "email_subject": email_subject,
+            "ai_response": email_body
         }
 
         return response_json
