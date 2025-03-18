@@ -6,40 +6,22 @@ from flask_cors import CORS
 import json
 import datetime
 import uuid
-import os
 
 app = Flask(__name__)
+CORS(app)
 
-# Define allowed origins
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 
-    'https://sullstice.com,http://localhost:8000,http://127.0.0.1:8000,https://s3.us-east-1.amazonaws.com'
-).split(',')
-
-# Configure CORS
-CORS(app, resources={
-    r"/*": {
-        "origins": ALLOWED_ORIGINS,
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "x-access-token"],
-        "supports_credentials": True,
-        "vary_header": True
-    }
-})
-
-def handle_request(request):
+@functions_framework.http
+def hello_http(request):
     # Get the origin from request headers
-    origin = request.headers.get('Origin', '')
-    
-    # Check if the origin contains the S3 domain but isn't an exact match
-    if 's3.us-east-1.amazonaws.com' in origin and origin not in ALLOWED_ORIGINS:
-        # For OPTIONS requests, return the right CORS headers for the S3 path
-        if request.method == 'OPTIONS':
-            response = Response()
-            response.headers.add('Access-Control-Allow-Origin', origin)
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
-            response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-            response.headers.add('Access-Control-Allow-Credentials', 'true')
-            return response
+    origin = request.headers.get('Origin', '*')
+
+    if request.method == 'OPTIONS':
+        response = Response()
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
     
     """Main Cloud Function that saves the request to a file and dispatches requests based on the URL path.
 
@@ -126,19 +108,3 @@ def handle_request(request):
     except Exception as e:
         error_response = Response(json.dumps({"error": str(e)}), status=500, mimetype='application/json')
         return error_response
-    
-# Cloud Function entry point
-@functions_framework.http
-def hello_http(request):
-    """Cloud Function entry point"""
-    return handle_request(request)
-
-# Flask route for local development
-@app.route('/<path:path>', methods=['GET', 'POST', 'OPTIONS'])
-def flask_handler(path):
-    """Flask route handler for local development"""
-    return handle_request(request)
-
-if __name__ == '__main__':
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'operative-connect-lite-41ee5442dc06.json'
-    app.run(host='127.0.0.1', port=5000, debug=True)
