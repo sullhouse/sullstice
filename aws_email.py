@@ -36,7 +36,7 @@ if not AWS_ACCESS_KEY or not AWS_SECRET_KEY:
     print("ℹ️ Using AWS credentials from environment variables")
 
 # Sender email
-SENDER_EMAIL = "no-reply@sullstice.com"
+SENDER_EMAIL = "sullhouse@sullstice.com"
 
 # Initialize AWS SES client
 ses_client = boto3.client(
@@ -46,19 +46,23 @@ ses_client = boto3.client(
     region_name=AWS_REGION,
 )
 
-def send_email(subject, body, recipient_email, cc_email=None):
+def send_email(subject, body, recipient_email, cc_email=None, reply_to_email=None, sender_email=SENDER_EMAIL):
     try:
         destination = {"ToAddresses": [recipient_email]}
         if cc_email:
             destination["CcAddresses"] = [cc_email]
-            
+        
+        # Add Reply-To header if provided
+        reply_to_addresses = [reply_to_email] if reply_to_email else None
+        
         response = ses_client.send_email(
-            Source=SENDER_EMAIL,
+            Source=sender_email,
             Destination=destination,
             Message={
                 "Subject": {"Data": subject},
                 "Body": {"Text": {"Data": body}},
             },
+            ReplyToAddresses=reply_to_addresses,  # Add Reply-To addresses here
         )
         print(f"✅ Email sent! Message ID: {response['MessageId']}")
     except Exception as e:

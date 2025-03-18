@@ -96,15 +96,31 @@ def hello_http(request):
                 blob.upload_from_string(json.dumps(response, indent=2))
             except Exception as e:
                 error_response = Response(json.dumps({"error": str(e)}), status=500, mimetype='application/json')
+                error_response.headers.add('Access-Control-Allow-Origin', origin)
+                error_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+                error_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+                error_response.headers.add('Access-Control-Allow-Credentials', 'true')
                 return error_response
 
             # Return the response as JSON
             json_response = Response(json.dumps(response), status=200, mimetype='application/json')
+            json_response.headers.add('Access-Control-Allow-Origin', origin)
+            json_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+            json_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+            json_response.headers.add('Access-Control-Allow-Credentials', 'true')
             return json_response
         else:
             error_response = Response(json.dumps({"error": "Function not found"}), status=404, mimetype='application/json')
+            error_response.headers.add('Access-Control-Allow-Origin', origin)
+            error_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+            error_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+            error_response.headers.add('Access-Control-Allow-Credentials', 'true')
             return error_response
 
     except Exception as e:
         error_response = Response(json.dumps({"error": str(e)}), status=500, mimetype='application/json')
+        error_response.headers.add('Access-Control-Allow-Origin', origin)
+        error_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+        error_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+        error_response.headers.add('Access-Control-Allow-Credentials', 'true')
         return error_response

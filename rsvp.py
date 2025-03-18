@@ -31,12 +31,14 @@ def main(request):
         # Create email body with the AI-generated response
         email_body = ai_response
         
-        # Send confirmation email WHEN READY UNCOMMENT THIS
+        # Send confirmation email
         aws_email.send_email(
             "Sullstice RSVP", 
             email_body, 
             email, 
-            "sullhouse@gmail.com"
+            "sullhouse@gmail.com",
+            "sullhouse@gmail.com",
+            "sullstice-ai-assistant@sullstice.com"
         )
 
         # Return confirmation to API caller
