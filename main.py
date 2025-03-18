@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # Define allowed origins
 ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 
-    'http://sullstice.com,http://localhost:8000,http://127.0.0.1:8000'
+    'http://sullstice.com,http://localhost:8000,http://127.0.0.1:8000,https://s3.us-east-1.amazonaws.com'
 ).split(',')
 
 # Configure CORS
@@ -21,20 +21,26 @@ CORS(app, resources={
         "origins": ALLOWED_ORIGINS,
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "x-access-token"],
-        "supports_credentials": True
+        "supports_credentials": True,
+        "vary_header": True
     }
 })
 
 def handle_request(request):
-    """Main handler function that can be called either by Flask route or Cloud Function"""
-    # Handle preflight OPTIONS requests
-    if request.method == 'OPTIONS':
-        response = Response()
-        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return response
+    # Get the origin from request headers
+    origin = request.headers.get('Origin', '')
+    
+    # Check if the origin contains the S3 domain but isn't an exact match
+    if 's3.us-east-1.amazonaws.com' in origin and origin not in ALLOWED_ORIGINS:
+        # For OPTIONS requests, return the right CORS headers for the S3 path
+        if request.method == 'OPTIONS':
+            response = Response()
+            response.headers.add('Access-Control-Allow-Origin', origin)
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+            response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            return response
+    
     """Main Cloud Function that saves the request to a file and dispatches requests based on the URL path.
 
     Args:
