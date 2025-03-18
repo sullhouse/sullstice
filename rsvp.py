@@ -32,12 +32,12 @@ def main(request):
         email_body = ai_response
         
         # Send confirmation email WHEN READY UNCOMMENT THIS
-        #aws_email.send_email(
-        #    "Sullstice RSVP", 
-        #    email_body, 
-        #    email, 
-        #    "sullhouse@gmail.com"
-        #)
+        aws_email.send_email(
+            "Sullstice RSVP", 
+            email_body, 
+            email, 
+            "sullhouse@gmail.com"
+        )
 
         # Return confirmation to API caller
         response_json = {
