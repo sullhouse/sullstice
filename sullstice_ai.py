@@ -230,9 +230,11 @@ For the body:
 Write a personalized email response to {personalization['nickname']} that:
 1. Shows genuine excitement about seeing them (and their guests) at Sullstice, with the tone matching our relationship and relationship level
 2. Confirms their RSVP details (arrival/departure days, camping preference, additional guests)
+2a. If they are arriving and departing same day, they aren't camping and we don't need to mention anything about camping or rv
 3. Addresses any notes or questions they included (if applicable)
 4. Provides relevant information from the event details based on their camping choice, arrival day, etc.
 5. If appropriate, mentions activities or performances from this year's lineup that might interest them
+5a. Tell them that the schedule is still being finalized and to check the website for updates
 6. If we're close (relationship level 1-3), include a personal touch or inside reference that feels authentic
 7. If it's someone I haven't seen in a while (level 3, 5, or 6), express that I'm looking forward to catching up
 8. If it's family, use an appropriate familial tone
