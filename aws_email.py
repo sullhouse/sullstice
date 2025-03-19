@@ -47,6 +47,14 @@ ses_client = boto3.client(
 )
 
 def send_email(subject, body, recipient_email, cc_email=None, reply_to_email=None, sender_email=SENDER_EMAIL):
+    # Check if we're in test mode
+    if os.getenv("SULLSTICE_TEST_MODE") == "True":
+        print(f"⚠️ Test mode: Email sending suppressed")
+        print(f"   To: {recipient_email}")
+        print(f"   Subject: {subject}")
+        print(f"   Body length: {len(body)} characters")
+        return {"MessageId": "TEST_MODE_NO_EMAIL_SENT"}
+        
     try:
         destination = {"ToAddresses": [recipient_email]}
         if cc_email:

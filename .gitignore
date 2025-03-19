@@ -1,5 +1,6 @@
 sullstice-a60fa1da2edb.json
-test.json
+test_assets/*
+test_assets
 test.py
 __pycache__/main.cpython-313.pyc
 __pycache__/rsvp.cpython-313.pyc
@@ -8,3 +9,8 @@ test_ai.py
 __pycache__/aws_email.cpython-313.pyc
 __pycache__/sullstice_ai.cpython-313.pyc
 __pycache__/get_people_from_sheet.cpython-313.pyc
+web/*
+web
+__pycache__/data_loader.cpython-313.pyc
+__pycache__/prompt_builder.cpython-313.pyc
+__pycache__/person_identifier.cpython-313.pyc

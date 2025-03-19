@@ -38,6 +38,7 @@ def main(request):
         request_json = request.get_json()
         
         # Extract data from the request using the new format
+        can_attend = request_json.get("can_attend", "yes").lower()  # Normalize to lowercase
         name = request_json.get("name", "Guest")
         email = request_json.get("email", "")
         other_guests = request_json.get("other_guests", "")
@@ -46,6 +47,9 @@ def main(request):
         camping = request_json.get("camping", "")
         notes = request_json.get("notes", "")
         questions = request_json.get("questions", "")
+        
+        # Ensure can_attend is set in the data passed to the AI
+        request_json["can_attend"] = can_attend
         
         # Use the AI module to generate a personalized response
         ai_response = sullstice_ai.generate_rsvp_response(request_json)
@@ -66,6 +70,7 @@ def main(request):
 
         # Return confirmation to API caller
         response_json = {
+            "can_attend": can_attend,
             "name": name,
             "email": email,
             "other_guests": other_guests,
