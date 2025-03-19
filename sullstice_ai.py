@@ -76,7 +76,7 @@ def generate_rsvp_response(rsvp_data):
         if body_match:
             body = body_match.group(1).strip()
         
-        body += f"\n\nP.S. This response came from Sullstice AI. Hopefully it was pretty good. No worries though, I'm cc'd on the email and read every one."
+        body += f"\n\nP.S. This response came from Sullstice AI. Hopefully it was pretty good. It made have made some stuff up. No worries though, I'm cc'd on the email and read every one."
         
         return {
             "subject": subject,
