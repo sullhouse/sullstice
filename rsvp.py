@@ -1,8 +1,38 @@
 import aws_email
 import sullstice_ai
+from google.cloud import bigquery
+import uuid
+from datetime import datetime
+
+# Initialize BigQuery client
+bigquery_client = bigquery.Client()
+
+def store_rsvp_in_bigquery(rsvp_data):
+    """
+    Store RSVP data in BigQuery
+    
+    Args:
+        rsvp_data: Dictionary containing RSVP information
+    """
+    try:
+        # Add timestamp and unique ID
+        rsvp_data["id"] = str(uuid.uuid4())
+        rsvp_data["timestamp"] = datetime.now().isoformat()
+        
+        # Define the table reference
+        table_ref = bigquery_client.dataset("guests").table("rsvp")
+        
+        # Insert the row
+        errors = bigquery_client.insert_rows_json(table_ref, [rsvp_data])
+        
+        if errors:
+            print(f"Encountered errors while inserting row: {errors}")
+        else:
+            print("RSVP data inserted into BigQuery")
+    except Exception as e:
+        print(f"Error storing RSVP in BigQuery: {str(e)}")
 
 def main(request):
-
     if request.is_json:
         # Get the JSON data
         request_json = request.get_json()
@@ -48,6 +78,9 @@ def main(request):
             "email_subject": email_subject,
             "ai_response": email_body
         }
+        
+        # Store RSVP data in BigQuery
+        store_rsvp_in_bigquery(response_json)
 
         return response_json
     else:

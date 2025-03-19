@@ -7,3 +7,4 @@ aws_ses_access_keys.json
 test_ai.py
 __pycache__/aws_email.cpython-313.pyc
 __pycache__/sullstice_ai.cpython-313.pyc
+__pycache__/get_people_from_sheet.cpython-313.pyc

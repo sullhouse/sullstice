@@ -2,10 +2,14 @@ import os
 import openai
 import logging
 import re
+from get_people_from_sheet import get_people_from_sheet
 
 # Initialize OpenAI API key from environment variable
 # Make sure to set OPENAI_API_KEY in your environment
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+api_key = os.environ.get("OPENAI_API_KEY")
+if not api_key:
+    logging.warning("OPENAI_API_KEY environment variable not set. OpenAI functions will fail.")
+openai.api_key = api_key
 
 def load_file(filepath, error_message):
     """
@@ -43,60 +47,23 @@ def load_current_lineup():
     """
     return load_file("sullstice_2025_lineup.txt", "Error loading 2025 lineup information")
 
-def load_people_data():
+def get_people_data():
     """
-    Load and parse the people information from people.txt
+    Get the latest people information directly from the Google Sheet
     
     Returns:
-        Dictionary with people's details indexed by name and email
+        Tuple containing people data dictionaries and relationship levels
     """
-    people_data = {}
-    people_by_email = {}
-    
-    people_txt = load_file("people.txt", "Error loading people information")
-    if not people_txt:
-        return {}, {}
-    
-    # Find the People section
-    people_section_match = re.search(r"#People#\s*(.*?)(?=$|\s*#)", people_txt, re.DOTALL)
-    if not people_section_match:
-        return {}, {}
-    
-    people_section = people_section_match.group(1).strip()
-    lines = people_section.split('\n')
-    
-    # Skip the header line
-    header = lines[0]
-    for line in lines[1:]:
-        if not line.strip():
-            continue
-            
-        # Split by tabs
-        parts = line.split('\t')
-        if len(parts) >= 6:
-            name, email, nickname, they_call_me, relationship, rel_level = parts[:6]
-            
-            person_info = {
-                'name': name.strip(),
-                'email': email.strip(),
-                'nickname': nickname.strip(),
-                'they_call_me': they_call_me.strip(),
-                'relationship': relationship.strip(),
-                'relationship_level': rel_level.strip() if rel_level.strip().isdigit() else '10'
-            }
-            
-            # Index by name (case insensitive)
-            people_data[name.strip().lower()] = person_info
-            
-            # Also index by email for lookup
-            if email.strip():
-                people_by_email[email.strip().lower()] = person_info
-    
-    return people_data, people_by_email
+    try:
+        people_data, people_by_email, relationship_levels = get_people_from_sheet()
+        return people_data, people_by_email, relationship_levels
+    except Exception as e:
+        logging.error(f"Error loading people information from sheet: {e}")
+        return {}, {}, {}
 
 def identify_person(name_or_email, people_data, people_by_email):
     """
-    Try to identify a person from people.txt by name or email
+    Try to identify a person by name or email
     
     Args:
         name_or_email: String with person's name or email
@@ -141,7 +108,7 @@ def generate_rsvp_response(rsvp_data):
     event_details = load_event_details()
     previous_event = load_previous_event()
     current_lineup = load_current_lineup()
-    people_data, people_by_email = load_people_data()
+    people_data, people_by_email, relationship_levels = get_people_data()
     
     # Extract RSVP information
     name = rsvp_data.get("name", "Guest")
@@ -198,6 +165,9 @@ def generate_rsvp_response(rsvp_data):
                     'relationship_level': '10'
                 })
     
+    # Build relationship levels description
+    relationship_levels_text = "\n".join([f"{level} = {description}" for level, description in relationship_levels.items()])
+    
     # Build RSVP summary for context
     rsvp_summary = f"""
 Name: {name}
@@ -237,16 +207,7 @@ Important personal context to help personalize this response:
 {relationship_context}
 
 Relationship level meanings:
-1 = very good close friend I see often
-2 = family, very close
-3 = very good close friend I don't see very often
-4 = good friend mostly connected through my softball team
-5 = friend through Sullstice - mostly just see them there
-6 = good friend but we haven't really stayed in touch
-7 = friend - but more a friend of friends
-8 = family, less close
-9 = acquaintance, have only met a few times
-10 = never met
+{relationship_levels_text}
 
 Here are the event details for reference:
 {event_details}
@@ -283,8 +244,12 @@ The response should be conversational, reflecting the actual relationship I have
 """
 
     try:
+        # Check if API key is available before calling the OpenAI API
+        if not api_key:
+            raise ValueError("OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.")
+        
         # Call OpenAI API
-        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
             model="gpt-4",  # Upgrade to GPT-4 for better personalization
             messages=[
@@ -376,7 +341,11 @@ INFORMATION ABOUT LAST YEAR'S EVENT (2024) - Use this for reference if the quest
 """
         
     try:
-        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # Check if API key is available before calling the OpenAI API
+        if not api_key:
+            raise ValueError("OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.")
+            
+        client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
             model="gpt-4",  # Upgraded to GPT-4 for better question answering
             messages=[
