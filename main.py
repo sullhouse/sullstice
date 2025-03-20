@@ -6,9 +6,27 @@ from flask_cors import CORS
 import json
 import datetime
 import uuid
+from sullstice_ai import answer_question  # Import the answer_question function
 
 app = Flask(__name__)
 CORS(app)
+
+def add_cors_headers(response, origin='*'):
+    """
+    Add CORS headers to a Flask response object
+    
+    Args:
+        response: Flask Response object
+        origin: Origin to allow, defaults to '*'
+        
+    Returns:
+        Flask Response object with CORS headers added
+    """
+    response.headers.add('Access-Control-Allow-Origin', origin)
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 @functions_framework.http
 def hello_http(request):
@@ -17,11 +35,7 @@ def hello_http(request):
 
     if request.method == 'OPTIONS':
         response = Response()
-        response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return response
+        return add_cors_headers(response, origin)
     
     """Main Cloud Function that saves the request to a file and dispatches requests based on the URL path.
 
@@ -72,11 +86,15 @@ def hello_http(request):
         # Define a dictionary mapping function names to modules
         functions = {
             "rsvp": "rsvp.main",  # Module name and function name
+            "questions": "questions.main"  # Updated to use questions.py main function
         }
 
         # Import the corresponding module dynamically
         if function_name in functions:
-            module_name, function_name = functions[function_name].rsplit(".", 1)
+            module_name = functions[function_name]
+            
+            # Regular module import for all endpoints
+            module_name, function_name = module_name.rsplit(".", 1)
             imported_module = __import__(module_name)
             function = getattr(imported_module, function_name)
             # Call the function with the request
@@ -96,31 +114,15 @@ def hello_http(request):
                 blob.upload_from_string(json.dumps(response, indent=2))
             except Exception as e:
                 error_response = Response(json.dumps({"error": str(e)}), status=500, mimetype='application/json')
-                error_response.headers.add('Access-Control-Allow-Origin', origin)
-                error_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
-                error_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-                error_response.headers.add('Access-Control-Allow-Credentials', 'true')
-                return error_response
+                return add_cors_headers(error_response, origin)
 
             # Return the response as JSON
             json_response = Response(json.dumps(response), status=200, mimetype='application/json')
-            json_response.headers.add('Access-Control-Allow-Origin', origin)
-            json_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
-            json_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-            json_response.headers.add('Access-Control-Allow-Credentials', 'true')
-            return json_response
+            return add_cors_headers(json_response, origin)
         else:
             error_response = Response(json.dumps({"error": "Function not found"}), status=404, mimetype='application/json')
-            error_response.headers.add('Access-Control-Allow-Origin', origin)
-            error_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
-            error_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-            error_response.headers.add('Access-Control-Allow-Credentials', 'true')
-            return error_response
+            return add_cors_headers(error_response, origin)
 
     except Exception as e:
         error_response = Response(json.dumps({"error": str(e)}), status=500, mimetype='application/json')
-        error_response.headers.add('Access-Control-Allow-Origin', origin)
-        error_response.headers.add('Access-Control-Allow-Headers', 'Content-Type,x-access-token')
-        error_response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-        error_response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return error_response
+        return add_cors_headers(error_response, origin)
