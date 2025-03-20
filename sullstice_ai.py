@@ -151,7 +151,7 @@ def answer_question(question):
             messages=[
                 {"role": "system", "content": """You are a helpful assistant for Sullstice, a multi-day camping event. 
 When answering questions:
-1. Prioritize information from the current year's details and lineup
+1. Prioritize information from the current year's details and lineup that are being pulled from live Google Docs
 2. If the current year's information doesn't fully address the question, you can reference how things worked in 2024, but clearly indicate that this is historical information and things might be different this year
 3. Be conversational and friendly in your tone
 4. Be concise but thorough

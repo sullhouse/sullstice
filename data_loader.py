@@ -1,5 +1,7 @@
 import logging
 from get_people_from_sheet import get_people_from_sheet
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
 
 def load_file(filepath, error_message):
     """
@@ -19,23 +21,66 @@ def load_file(filepath, error_message):
         logging.error(f"{error_message}: {e}")
         return ""
 
+def get_doc_content(doc_id):
+    """
+    Get content from a Google Doc
+    
+    Args:
+        doc_id: The ID of the Google Doc
+        
+    Returns:
+        String containing the document content
+    """
+    try:
+        # Configure the connection
+        SCOPES = ['https://www.googleapis.com/auth/documents.readonly']
+        SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
+        
+        # Authenticate and build service
+        credentials = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        docs_service = build('docs', 'v1', credentials=credentials)
+        
+        # Get the document content
+        document = docs_service.documents().get(documentId=doc_id).execute()
+        doc_content = document.get('body').get('content')
+        
+        # Extract text from the document
+        text = ""
+        for element in doc_content:
+            if 'paragraph' in element:
+                for paragraph_element in element.get('paragraph').get('elements'):
+                    if 'textRun' in paragraph_element:
+                        text += paragraph_element.get('textRun').get('content')
+        
+        return text
+    except Exception as e:
+        logging.error(f"Error fetching Google Doc content: {e}")
+        return ""
+
 def load_event_details():
     """
-    Load current event details from the event_details.txt file
+    Load current event details from Google Docs
     """
-    return load_file("event_details.txt", "Error loading event details")
+    EVENT_DETAILS_DOC_ID = '1luRVbRCQOK31oI4mrfNDJUX7-Pc1yv6ZotgduwpKZ8A' # Replace with your actual Doc ID
+    content = get_doc_content(EVENT_DETAILS_DOC_ID)
+    return content
 
 def load_previous_event():
     """
-    Load information about the previous year's event
+    Load information about the previous year's event from Google Docs
     """
-    return load_file("sullstice_2024.txt", "Error loading 2024 event information")
+    PREVIOUS_EVENT_DOC_ID = '1EnXvBT-ehH5eM2txjU5fG6aTofgw8MwvZ540UMOUWNs' # Replace with your actual Doc ID
+    content = get_doc_content(PREVIOUS_EVENT_DOC_ID)
+    return content
 
 def load_current_lineup():
     """
-    Load information about the current year's lineup and activities
+    Load information about the current year's lineup and activities from Google Docs
     """
-    return load_file("sullstice_2025_lineup.txt", "Error loading 2025 lineup information")
+    CURRENT_LINEUP_DOC_ID = '1pVbeaffYThcj71rdIAi8AfcYCyv_UyuY_0ylUadTWyA' # Replace with your actual Doc ID
+    content = get_doc_content(CURRENT_LINEUP_DOC_ID)
+    return content
 
 def get_people_data():
     """
