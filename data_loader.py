@@ -3,7 +3,6 @@ import os
 import json
 from get_people_from_sheet import get_people_from_sheet
 from googleapiclient.discovery import build
-from google.oauth2 import service_account
 from google.auth import default
 
 def load_file(filepath, error_message):
@@ -38,19 +37,9 @@ def get_doc_content(doc_id):
         # Configure the connection
         SCOPES = ['https://www.googleapis.com/auth/documents.readonly']
         
-        # Check if we're in test mode
-        is_test_mode = os.environ.get('SULLSTICE_TEST_MODE', 'False').lower() == 'true'
-        
-        if is_test_mode:
-            # In test mode, use the service account file
-            logging.info("Running in test mode, using service account file")
-            SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
-            credentials = service_account.Credentials.from_service_account_file(
-                SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-        else:
-            # In production, rely on the service account running the app
-            logging.info("Running in production mode, using default credentials")
-            credentials, project = default(scopes=SCOPES)
+        # Use default credentials from environment
+        logging.info("Using default credentials for Google Docs access")
+        credentials, project = default(scopes=SCOPES)
         
         # Build the service with the appropriate credentials
         docs_service = build('docs', 'v1', credentials=credentials)
@@ -104,9 +93,7 @@ def get_people_data():
         Tuple containing people data dictionaries and relationship levels
     """
     try:
-        # Pass the test mode flag to get_people_from_sheet
-        is_test_mode = os.environ.get('SULLSTICE_TEST_MODE', 'False').lower() == 'true'
-        people_data, people_by_email, relationship_levels = get_people_from_sheet(is_test_mode)
+        people_data, people_by_email, relationship_levels = get_people_from_sheet()
         return people_data, people_by_email, relationship_levels
     except Exception as e:
         logging.error(f"Error loading people information from sheet: {e}")

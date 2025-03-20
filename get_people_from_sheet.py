@@ -1,16 +1,12 @@
 import json
 import os
 import logging
-from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from google.auth import default
 
-def get_people_from_sheet(is_test_mode=None):
+def get_people_from_sheet():
     """Gets people data directly from a Google Sheet
     
-    Args:
-        is_test_mode: Boolean indicating if running in test mode
-        
     Returns:
         tuple: (people_data, people_by_email, relationship_levels) - Dictionaries with people's details 
                indexed by name and email, and relationship level definitions
@@ -21,30 +17,11 @@ def get_people_from_sheet(is_test_mode=None):
     SPREADSHEET_ID = '1Hg5d-wXrxdsf9FgtH3h6Bq86w_ipr1akv_E_KbLFdYE'  # From the URL of your sheet
     RANGE_NAME = 'Emails!A2:F500'  # Adjust based on your data layout
     
-    # If is_test_mode wasn't passed, check the environment variable
-    if is_test_mode is None:
-        is_test_mode = os.environ.get('SULLSTICE_TEST_MODE', 'False').lower() == 'true'
-    
     try:
-        if is_test_mode:
-            # In test mode, use the service account file
-            logging.info("Sheet access: Running in test mode, using service account file")
-            SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
-            
-            # Print the service account email for verification (in test mode only)
-            with open(SERVICE_ACCOUNT_FILE, 'r') as f:
-                service_account_info = json.load(f)
-                service_account_email = service_account_info.get('client_email')
-                logging.info(f"Service account email: {service_account_email}")
-                logging.info(f"Please make sure this email has viewer access to your spreadsheet")
-            
-            credentials = service_account.Credentials.from_service_account_file(
-                SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-        else:
-            # In production, rely on the service account running the app
-            logging.info("Sheet access: Running in production mode, using default credentials")
-            credentials, project = default(scopes=SCOPES)
-            logging.info(f"Using default GCP credentials for project: {project}")
+        # Use default credentials from environment
+        logging.info("Sheet access: Using default credentials")
+        credentials, project = default(scopes=SCOPES)
+        logging.info(f"Using default GCP credentials for project: {project}")
     except Exception as e:
         logging.error(f"Error with authentication: {e}")
         return {}, {}, {}
