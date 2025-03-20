@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from get_people_from_sheet import get_people_from_sheet
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -37,17 +38,19 @@ def get_doc_content(doc_id):
         # Configure the connection
         SCOPES = ['https://www.googleapis.com/auth/documents.readonly']
         
-        # Determine if running in GCP or locally
-        is_gcp = os.environ.get('GCP_PROJECT') or os.environ.get('FUNCTION_NAME')
+        # Check if we're in test mode
+        is_test_mode = os.environ.get('SULLSTICE_TEST_MODE', 'False').lower() == 'true'
         
-        if is_gcp:
-            # When running in GCP, use the default service account
-            credentials, project = default(scopes=SCOPES)
-        else:
-            # When running locally, use the service account file
+        if is_test_mode:
+            # In test mode, use the service account file
+            logging.info("Running in test mode, using service account file")
             SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
             credentials = service_account.Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        else:
+            # In production, rely on the service account running the app
+            logging.info("Running in production mode, using default credentials")
+            credentials, project = default(scopes=SCOPES)
         
         # Build the service with the appropriate credentials
         docs_service = build('docs', 'v1', credentials=credentials)
@@ -101,7 +104,9 @@ def get_people_data():
         Tuple containing people data dictionaries and relationship levels
     """
     try:
-        people_data, people_by_email, relationship_levels = get_people_from_sheet()
+        # Pass the test mode flag to get_people_from_sheet
+        is_test_mode = os.environ.get('SULLSTICE_TEST_MODE', 'False').lower() == 'true'
+        people_data, people_by_email, relationship_levels = get_people_from_sheet(is_test_mode)
         return people_data, people_by_email, relationship_levels
     except Exception as e:
         logging.error(f"Error loading people information from sheet: {e}")

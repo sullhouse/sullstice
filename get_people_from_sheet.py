@@ -1,12 +1,16 @@
 import json
 import os
+import logging
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from google.auth import default
 
-def get_people_from_sheet():
+def get_people_from_sheet(is_test_mode=None):
     """Gets people data directly from a Google Sheet
     
+    Args:
+        is_test_mode: Boolean indicating if running in test mode
+        
     Returns:
         tuple: (people_data, people_by_email, relationship_levels) - Dictionaries with people's details 
                indexed by name and email, and relationship level definitions
@@ -17,29 +21,32 @@ def get_people_from_sheet():
     SPREADSHEET_ID = '1Hg5d-wXrxdsf9FgtH3h6Bq86w_ipr1akv_E_KbLFdYE'  # From the URL of your sheet
     RANGE_NAME = 'Emails!A2:F500'  # Adjust based on your data layout
     
-    # Determine if running in GCP or locally
-    is_gcp = os.environ.get('GCP_PROJECT') or os.environ.get('FUNCTION_NAME')
+    # If is_test_mode wasn't passed, check the environment variable
+    if is_test_mode is None:
+        is_test_mode = os.environ.get('SULLSTICE_TEST_MODE', 'False').lower() == 'true'
     
     try:
-        if is_gcp:
-            # When running in GCP, use the default service account
-            credentials, project = default(scopes=SCOPES)
-            print(f"Using default GCP credentials for project: {project}")
-        else:
-            # When running locally, use the service account file
+        if is_test_mode:
+            # In test mode, use the service account file
+            logging.info("Sheet access: Running in test mode, using service account file")
             SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
             
-            # Print the service account email for verification (local only)
+            # Print the service account email for verification (in test mode only)
             with open(SERVICE_ACCOUNT_FILE, 'r') as f:
                 service_account_info = json.load(f)
                 service_account_email = service_account_info.get('client_email')
-                print(f"Service account email: {service_account_email}")
-                print(f"Please make sure this email has viewer access to your spreadsheet")
+                logging.info(f"Service account email: {service_account_email}")
+                logging.info(f"Please make sure this email has viewer access to your spreadsheet")
             
             credentials = service_account.Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        else:
+            # In production, rely on the service account running the app
+            logging.info("Sheet access: Running in production mode, using default credentials")
+            credentials, project = default(scopes=SCOPES)
+            logging.info(f"Using default GCP credentials for project: {project}")
     except Exception as e:
-        print(f"Error with authentication: {e}")
+        logging.error(f"Error with authentication: {e}")
         return {}, {}, {}
     
     # Build the service with the appropriate credentials
@@ -48,9 +55,9 @@ def get_people_from_sheet():
     # Test access to the API
     try:
         metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
-        print(f"Successfully connected to spreadsheet: {metadata.get('properties', {}).get('title')}")
+        logging.info(f"Successfully connected to spreadsheet: {metadata.get('properties', {}).get('title')}")
     except Exception as e:
-        print(f"API access error: {str(e)}")
+        logging.error(f"API access error: {str(e)}")
         return {}, {}, {}
 
     # Call the Sheets API
@@ -59,7 +66,7 @@ def get_people_from_sheet():
     rows = result.get('values', [])
     
     if not rows:
-        print('No data found.')
+        logging.info('No data found.')
         return {}, {}, {}
     
     # Define relationship levels
@@ -108,7 +115,7 @@ def get_people_from_sheet():
         
         people_count += 1
     
-    print(f"Retrieved {len(rows)} total rows and added {people_count} people entries from Google Sheets")
+    logging.info(f"Retrieved {len(rows)} total rows and added {people_count} people entries from Google Sheets")
     
     # Return the dictionaries of people data and relationship levels
     return people_data, people_by_email, relationship_levels
