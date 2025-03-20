@@ -1,7 +1,9 @@
 import logging
+import os
 from get_people_from_sheet import get_people_from_sheet
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+from google.auth import default
 
 def load_file(filepath, error_message):
     """
@@ -34,11 +36,20 @@ def get_doc_content(doc_id):
     try:
         # Configure the connection
         SCOPES = ['https://www.googleapis.com/auth/documents.readonly']
-        SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
         
-        # Authenticate and build service
-        credentials = service_account.Credentials.from_service_account_file(
-            SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        # Determine if running in GCP or locally
+        is_gcp = os.environ.get('GCP_PROJECT') or os.environ.get('FUNCTION_NAME')
+        
+        if is_gcp:
+            # When running in GCP, use the default service account
+            credentials, project = default(scopes=SCOPES)
+        else:
+            # When running locally, use the service account file
+            SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
+            credentials = service_account.Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        
+        # Build the service with the appropriate credentials
         docs_service = build('docs', 'v1', credentials=credentials)
         
         # Get the document content
