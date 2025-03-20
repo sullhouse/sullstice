@@ -1,6 +1,8 @@
 import json
+import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from google.auth import default
 
 def get_people_from_sheet():
     """Gets people data directly from a Google Sheet
@@ -12,30 +14,41 @@ def get_people_from_sheet():
     
     # Configure the connection
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-    SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
     SPREADSHEET_ID = '1Hg5d-wXrxdsf9FgtH3h6Bq86w_ipr1akv_E_KbLFdYE'  # From the URL of your sheet
     RANGE_NAME = 'Emails!A2:F500'  # Adjust based on your data layout
     
-    # Print the service account email for verification
+    # Determine if running in GCP or locally
+    is_gcp = os.environ.get('GCP_PROJECT') or os.environ.get('FUNCTION_NAME')
+    
     try:
-        with open(SERVICE_ACCOUNT_FILE, 'r') as f:
-            service_account_info = json.load(f)
-            service_account_email = service_account_info.get('client_email')
-            print(f"Service account email: {service_account_email}")
-            print(f"Please make sure this email has viewer access to your spreadsheet")
+        if is_gcp:
+            # When running in GCP, use the default service account
+            credentials, project = default(scopes=SCOPES)
+            print(f"Using default GCP credentials for project: {project}")
+        else:
+            # When running locally, use the service account file
+            SERVICE_ACCOUNT_FILE = 'sullstice-a60fa1da2edb.json'
+            
+            # Print the service account email for verification (local only)
+            with open(SERVICE_ACCOUNT_FILE, 'r') as f:
+                service_account_info = json.load(f)
+                service_account_email = service_account_info.get('client_email')
+                print(f"Service account email: {service_account_email}")
+                print(f"Please make sure this email has viewer access to your spreadsheet")
+            
+            credentials = service_account.Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     except Exception as e:
-        print(f"Error reading service account file: {e}")
+        print(f"Error with authentication: {e}")
         return {}, {}, {}
     
-    # Authenticate and build service
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    # Build the service with the appropriate credentials
     service = build('sheets', 'v4', credentials=credentials)
     
     # Test access to the API
     try:
-        service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
-        print("Successfully connected to the spreadsheet API")
+        metadata = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+        print(f"Successfully connected to spreadsheet: {metadata.get('properties', {}).get('title')}")
     except Exception as e:
         print(f"API access error: {str(e)}")
         return {}, {}, {}
