@@ -62,8 +62,10 @@ def hello_http(request):
     # Construct the full path within the bucket
     blob = bucket.blob(f"{folder_name}/{filename}")
 
-    # Get the function name from the request URL
-    function_name = request.path.split("/")[-1]
+    # Extract the function name from the request URL, ignoring query parameters
+    # This splits the path and takes the last part before any query parameters
+    path_without_params = request.path.split('?')[0]
+    function_name = path_without_params.strip('/').split('/')[-1]
 
     # Define a dictionary mapping function names to modules
     functions = {
@@ -77,11 +79,17 @@ def hello_http(request):
         if request.method == 'GET':
             # For GET requests (like updated_event_details_html)
             # Create a dictionary with only path and headers (no JSON)
+            # Ensure all data is JSON serializable by converting headers to dict
+            headers_dict = {}
+            for key, value in request.headers.items():
+                headers_dict[key] = str(value)
+                
             request_data = {
                 "method": "GET",
                 "path": request.path,
-                "headers": dict(request.headers),
-                "timestamp": timestamp
+                "headers": headers_dict,  # Use the serializable headers dict
+                "timestamp": timestamp,
+                "query_parameters": dict(request.args.to_dict())  # Ensure query params are also serializable
             }
             
             # Save the request data to the GCS bucket

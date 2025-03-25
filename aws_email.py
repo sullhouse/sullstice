@@ -20,7 +20,7 @@ AWS_REGION = "us-east-1"  # Change if using another region
 # Try to load credentials from JSON file if in development
 if is_development_environment():
     try:
-        json_path = os.path.join(os.path.dirname(__file__), 'aws_ses_access_keys.json')
+        json_path = os.path.join(os.path.dirname(__file__), 'aws_access_keys.json')
         with open(json_path, 'r') as f:
             credentials = json.load(f)
             AWS_ACCESS_KEY = credentials.get('aws_access_key')
