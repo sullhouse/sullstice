@@ -25,13 +25,13 @@ def load_file(filepath, error_message):
 
 def get_doc_content(doc_id):
     """
-    Get content from a Google Doc
+    Get content from a Google Doc and convert formatting to markdown
     
     Args:
         doc_id: The ID of the Google Doc
         
     Returns:
-        String containing the document content
+        String containing the document content with formatting converted to markdown
     """
     try:
         # Configure the connection
@@ -48,13 +48,25 @@ def get_doc_content(doc_id):
         document = docs_service.documents().get(documentId=doc_id).execute()
         doc_content = document.get('body').get('content')
         
-        # Extract text from the document
+        # Extract text with formatting from the document
+        # For updated_event_details, we'll assume the document contains plain markdown
+        # that already follows our expected formatting pattern
         text = ""
         for element in doc_content:
             if 'paragraph' in element:
-                for paragraph_element in element.get('paragraph').get('elements'):
+                paragraph = element.get('paragraph')
+                
+                paragraph_text = ""
+                for paragraph_element in paragraph.get('elements', []):
                     if 'textRun' in paragraph_element:
-                        text += paragraph_element.get('textRun').get('content')
+                        content = paragraph_element.get('textRun').get('content', '')
+                        paragraph_text += content
+                
+                # Add the paragraph text as-is, preserving markdown syntax
+                text += paragraph_text
+        
+        # Ensure consistent line endings
+        text = text.replace('\r\n', '\n').replace('\r', '\n')
         
         return text
     except Exception as e:
@@ -67,6 +79,14 @@ def load_event_details():
     """
     EVENT_DETAILS_DOC_ID = '1luRVbRCQOK31oI4mrfNDJUX7-Pc1yv6ZotgduwpKZ8A' # Replace with your actual Doc ID
     content = get_doc_content(EVENT_DETAILS_DOC_ID)
+    return content
+
+def load_updated_event_details():
+    """
+    Load updated event details from Google Docs
+    """
+    UPDATED_EVENT_DETAILS_DOC_ID = '1rPJ1CGlilZ4EhdE_dXv_PRaZrufSoHZfVIXt3ps8Ey4'
+    content = get_doc_content(UPDATED_EVENT_DETAILS_DOC_ID)
     return content
 
 def load_previous_event():
