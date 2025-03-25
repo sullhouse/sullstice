@@ -70,7 +70,7 @@ def generate_details_html(doc_content):
     """
     try:
         # Get the template content with explicit UTF-8 encoding
-        template_path = os.path.join(os.path.dirname(__file__), 'web', 'details_template.html')
+        template_path = os.path.join(os.path.dirname(__file__), 'details_template.html')
         with open(template_path, 'r', encoding='utf-8') as f:
             template = f.read()
         
