@@ -64,6 +64,39 @@ def update_rsvp_in_bigquery(rsvp_id, ai_response):
     except Exception as e:
         print(f"Error updating RSVP in BigQuery: {str(e)}")
 
+def store_ai_response_in_bigquery(rsvp_id, status, email_subject, ai_response):
+    """
+    Store the AI response in a separate BigQuery table
+    
+    Args:
+        rsvp_id: The unique ID of the RSVP entry
+        status: The status of the RSVP processing
+        email_subject: The subject of the AI-generated email
+        ai_response: The AI-generated response body
+    """
+    try:
+        # Prepare the data for insertion
+        ai_response_data = {
+            "id": rsvp_id,
+            "status": status,
+            "email_subject": email_subject,
+            "ai_response": ai_response,
+            "timestamp": datetime.now().isoformat(),
+        }
+        
+        # Define the table reference
+        table_ref = bigquery_client.dataset("guests").table("rsvp_ai_response")
+        
+        # Insert the row
+        errors = bigquery_client.insert_rows_json(table_ref, [ai_response_data])
+        
+        if errors:
+            print(f"Encountered errors while inserting AI response: {errors}")
+        else:
+            print("AI response data inserted into BigQuery")
+    except Exception as e:
+        print(f"Error storing AI response in BigQuery: {str(e)}")
+
 def main(request):
     if request.is_json:
         # Get the JSON data
@@ -136,9 +169,9 @@ def main(request):
             "sullstice-ai-assistant@sullstice.com"
         )
         
-        # Update the BigQuery entry with the AI response
+        # Store the AI response in the new BigQuery table
         rsvp_id = rsvp_data.get("id")
-        update_rsvp_in_bigquery(rsvp_id, email_body)
+        store_ai_response_in_bigquery(rsvp_id, "RSVP received successfully", email_subject, email_body)
         
         # Return confirmation to API caller
         response_json = {
