@@ -32,6 +32,38 @@ def store_rsvp_in_bigquery(rsvp_data):
     except Exception as e:
         print(f"Error storing RSVP in BigQuery: {str(e)}")
 
+def update_rsvp_in_bigquery(rsvp_id, ai_response):
+    """
+    Update the RSVP entry in BigQuery with the AI response
+    
+    Args:
+        rsvp_id: The unique ID of the RSVP entry
+        ai_response: The AI-generated response to update
+    """
+    try:
+        # Define the table reference
+        table_ref = bigquery_client.dataset("guests").table("rsvp")
+        
+        # Define the update query
+        query = f"""
+        UPDATE `{table_ref.project}.{table_ref.dataset_id}.{table_ref.table_id}`
+        SET ai_response = @ai_response
+        WHERE id = @rsvp_id
+        """
+        
+        # Execute the query with parameters
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("ai_response", "STRING", ai_response),
+                bigquery.ScalarQueryParameter("rsvp_id", "STRING", rsvp_id),
+            ]
+        )
+        query_job = bigquery_client.query(query, job_config=job_config)
+        query_job.result()  # Wait for the query to complete
+        print("RSVP entry updated with AI response in BigQuery")
+    except Exception as e:
+        print(f"Error updating RSVP in BigQuery: {str(e)}")
+
 def main(request):
     if request.is_json:
         # Get the JSON data
@@ -48,8 +80,44 @@ def main(request):
         notes = request_json.get("notes", "")
         questions = request_json.get("questions", "")
         
-        # Ensure can_attend is set in the data passed to the AI
-        request_json["can_attend"] = can_attend
+        # Prepare the initial RSVP data
+        rsvp_data = {
+            "can_attend": can_attend,
+            "name": name,
+            "email": email,
+            "other_guests": other_guests,
+            "arriving": arriving,
+            "departing": departing,
+            "camping": camping,
+            "notes": notes,
+            "questions": questions,
+        }
+        
+        # Send an initial email with the RSVP details
+        initial_email_subject = f"New RSVP Received: {name}"
+        initial_email_body = (
+            f"RSVP Details:\n\n"
+            f"Name: {name}\n"
+            f"Email: {email}\n"
+            f"Can Attend: {can_attend}\n"
+            f"Other Guests: {other_guests}\n"
+            f"Arriving: {arriving}\n"
+            f"Departing: {departing}\n"
+            f"Camping: {camping}\n"
+            f"Notes: {notes}\n"
+            f"Questions: {questions}\n"
+        )
+        aws_email.send_email(
+            initial_email_subject,
+            initial_email_body,
+            "sullhouse@gmail.com",
+            None,  # No CC for the initial email
+            None,  # No Reply-To for the initial email
+            "sullstice-ai-assistant@sullstice.com"
+        )
+        
+        # Store the RSVP data in BigQuery (without AI response)
+        store_rsvp_in_bigquery(rsvp_data)
         
         # Use the AI module to generate a personalized response
         ai_response = sullstice_ai.generate_rsvp_response(request_json)
@@ -58,7 +126,7 @@ def main(request):
         email_subject = ai_response.get("subject", "Sullstice RSVP")
         email_body = ai_response.get("body", "")
         
-        # Send confirmation email
+        # Send the final confirmation email with the AI response
         aws_email.send_email(
             email_subject, 
             email_body, 
@@ -67,7 +135,11 @@ def main(request):
             "sullhouse@gmail.com",
             "sullstice-ai-assistant@sullstice.com"
         )
-
+        
+        # Update the BigQuery entry with the AI response
+        rsvp_id = rsvp_data.get("id")
+        update_rsvp_in_bigquery(rsvp_id, email_body)
+        
         # Return confirmation to API caller
         response_json = {
             "can_attend": can_attend,
@@ -83,9 +155,6 @@ def main(request):
             "email_subject": email_subject,
             "ai_response": email_body
         }
-        
-        # Store RSVP data in BigQuery
-        store_rsvp_in_bigquery(response_json)
 
         return response_json
     else:
